@@ -159,42 +159,89 @@
 
     <div class="video-grid">
       <div class="video-item">
-        <video controls loop>
-          <source src="./static/videos/video1.mp4" type="video/mp4">
-        </video>
+        <div class="video-wrapper">
+          <video controls loop preload="none">
+            <source data-src="./static/videos/video1.mp4" type="video/mp4">
+          </video>
+          <div class="video-overlay" aria-label="Play Demo 1">
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+          </div>
+        </div>
         <div class="video-label">Demo 1</div>
       </div>
       <div class="video-item">
-        <video controls loop>
-          <source src="./static/videos/video2.mp4" type="video/mp4">
-        </video>
+        <div class="video-wrapper">
+          <video controls loop preload="none">
+            <source data-src="./static/videos/video2.mp4" type="video/mp4">
+          </video>
+          <div class="video-overlay" aria-label="Play Demo 2">
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+          </div>
+        </div>
         <div class="video-label">Demo 2</div>
       </div>
       <div class="video-item">
-        <video controls loop>
-          <source src="./static/videos/video3.mp4" type="video/mp4">
-        </video>
+        <div class="video-wrapper">
+          <video controls loop preload="none">
+            <source data-src="./static/videos/video3.mp4" type="video/mp4">
+          </video>
+          <div class="video-overlay" aria-label="Play Demo 3">
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+          </div>
+        </div>
         <div class="video-label">Demo 3</div>
       </div>
       <div class="video-item">
-        <video controls loop>
-          <source src="./static/videos/video4.mp4" type="video/mp4">
-        </video>
+        <div class="video-wrapper">
+          <video controls loop preload="none">
+            <source data-src="./static/videos/video4.mp4" type="video/mp4">
+          </video>
+          <div class="video-overlay" aria-label="Play Demo 4">
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+          </div>
+        </div>
         <div class="video-label">Demo 4</div>
       </div>
       <div class="video-item">
-        <video controls loop>
-          <source src="./static/videos/video5.mp4" type="video/mp4">
-        </video>
+        <div class="video-wrapper">
+          <video controls loop preload="none">
+            <source data-src="./static/videos/video5.mp4" type="video/mp4">
+          </video>
+          <div class="video-overlay" aria-label="Play Demo 5">
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+          </div>
+        </div>
         <div class="video-label">Demo 5</div>
       </div>
       <div class="video-item">
-        <video controls loop>
-          <source src="./static/videos/video6.mp4" type="video/mp4">
-        </video>
+        <div class="video-wrapper">
+          <video controls loop preload="none">
+            <source data-src="./static/videos/video6.mp4" type="video/mp4">
+          </video>
+          <div class="video-overlay" aria-label="Play Demo 6">
+            <div class="play-btn"><i class="fas fa-play"></i></div>
+          </div>
+        </div>
         <div class="video-label">Demo 6</div>
       </div>
     </div>
+
+    <script>
+      document.querySelectorAll('.video-overlay').forEach(function(overlay) {
+        overlay.addEventListener('click', function() {
+          var wrapper = overlay.parentElement;
+          var video = wrapper.querySelector('video');
+          var source = video.querySelector('source[data-src]');
+          if (source) {
+            source.src = source.getAttribute('data-src');
+            source.removeAttribute('data-src');
+            video.load();
+          }
+          overlay.style.display = 'none';
+          video.play();
+        });
+      });
+    </script>
   </div>
 </section>
 
