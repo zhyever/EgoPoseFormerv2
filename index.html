@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EgoPoseFormer v2: Accurate Egocentric Human Motion Estimation for AR/VR</title>
+  <meta name="description" content="EgoPoseFormer v2 — a transformer-based method for accurate and temporally-consistent egocentric 3D human motion estimation, with a scalable auto-labeling system. CVPR 2026 Highlight.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- Hero                                            -->
+<!-- ════════════════════════════════════════════════ -->
+<header class="hero">
+  <div class="container">
+    <h1>EgoPoseFormer v2:<br>Accurate Egocentric Human Motion Estimation for AR/VR</h1>
+    <span class="badge">CVPR 2026 Highlight</span>
+
+    <p class="authors">
+      <a href="#">Zhenyu Li</a><sup>1,2*</sup>,
+      <a href="#">Sai Kumar Dwivedi</a><sup>1,3*</sup>,
+      <a href="#">Filip Maric</a><sup>1</sup>,
+      <a href="#">Carlos Chacón</a><sup>1</sup>,
+      <a href="#">Nadine Bertsch</a><sup>1</sup>,
+      <a href="#">Filippo Arcadu</a><sup>1</sup>,
+      <a href="#">Tomas Hodan</a><sup>1</sup>,
+      <a href="#">Michael Ramamonjisoa</a><sup>1</sup>,
+      <a href="#">Peter Wonka</a><sup>2</sup>,
+      <a href="#">Amy Zhao</a><sup>1</sup>,
+      <a href="#">Robin Kips</a><sup>1</sup>,
+      <a href="#">Cem Keskin</a><sup>1</sup>,
+      <a href="#">Anastasia Tkach</a><sup>1†</sup>,
+      <a href="#">Chenhongyi Yang</a><sup>1†</sup>
+    </p>
+    <p class="affiliations">
+      <sup>1</sup>Meta &nbsp;&nbsp;
+      <sup>2</sup>KAUST &nbsp;&nbsp;
+      <sup>3</sup>Max Planck Institute for Intelligent Systems
+    </p>
+    <p class="equal-contrib">* Work done during internship at Meta &nbsp;&nbsp; † Equal supervision</p>
+
+    <div class="links">
+      <a href="https://arxiv.org/abs/2603.04090" class="btn-paper" target="_blank">
+        <i class="fas fa-file-pdf"></i> Paper
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- Teaser                                          -->
+<!-- ════════════════════════════════════════════════ -->
+<section id="teaser">
+  <div class="container">
+    <div class="figure figure-wide">
+      <img src="static/images/teaser.png" alt="EgoPoseFormer v2 teaser — in-the-wild results">
+      <p class="figure-caption">
+        <b>Results on an in-the-wild sequence.</b> Top to bottom: (1)&nbsp;input egocentric images with 2D projections of estimated body joints, (2)&nbsp;outside-in capture, and (3)&nbsp;renderings of estimated body motion. EgoPoseFormer&nbsp;v2 demonstrates accurate and temporally-consistent estimates.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- Abstract                                        -->
+<!-- ════════════════════════════════════════════════ -->
+<section id="abstract">
+  <div class="container">
+    <h2>Abstract</h2>
+    <p>
+      Egocentric human motion estimation is essential for AR/VR experiences, yet remains challenging due to limited body coverage from the egocentric viewpoint, frequent occlusions, and scarce labeled data. We present <b>EgoPoseFormer&nbsp;v2</b>, a method that addresses these challenges through two key contributions: (1)&nbsp;a transformer-based model for temporally consistent and spatially grounded body pose estimation, and (2)&nbsp;an auto-labeling system that enables the use of large unlabeled datasets for training.
+    </p>
+    <p>
+      Our model is fully differentiable, introduces identity-conditioned queries, multi-view spatial refinement, causal temporal attention, and supports both keypoints and parametric body representations under a constant compute budget. The auto-labeling system scales learning to tens of millions of unlabeled frames via uncertainty-aware semi-supervised training. The system follows a teacher–student schema to generate pseudo-labels and guide training with uncertainty distillation, enabling the model to generalize to different environments.
+    </p>
+    <p>
+      On the EgoBody3M benchmark, with a 0.8&nbsp;ms latency on GPU, our model outperforms two state-of-the-art methods by 12.2% and 19.4% in accuracy, and reduces temporal jitter by 22.2% and 51.7%. Furthermore, our auto-labeling system further improves the wrist MPJPE by 13.1%.
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- Method                                          -->
+<!-- ════════════════════════════════════════════════ -->
+<section id="method">
+  <div class="container">
+    <h2>Method</h2>
+
+    <h3>Architecture</h3>
+    <p>
+      EgoPoseFormer&nbsp;v2 is a fully differentiable, end-to-end transformer architecture. Unlike its predecessor that uses separate learnable queries for each joint, EPFv2 uses a <b>single holistic query</b> conditioned on pose-dependent metadata (user identity and headset pose) to represent the entire body state. This makes computation independent of the body representation, improving efficiency and flexibility.
+    </p>
+    <p>
+      The model stacks two architecturally identical transformer decoder blocks with full gradient flow. The first decoder predicts an initial 3D pose from temporal multi-view features. The second refines the estimation by projecting coarse 3D keypoints onto image planes and using the 2D positions as spatial conditioning for <b>conditioned multi-view cross-attention</b>. Coupled with <b>causal temporal attention</b>, EPFv2 produces accurate, temporally-consistent motion even for invisible body parts.
+    </p>
+
+    <div class="figure figure-wide">
+      <img src="static/images/arch.png" alt="Architecture overview">
+      <p class="figure-caption">
+        <b>Architecture overview (left).</b> We stack two transformer decoders for coarse-to-fine pose estimation. A single holistic query, initialized from auxiliary metadata, attends to multi-view features and historic information. <b>Illustration of the two core attention modules (right).</b> Causal temporal attention enables each frame to attend to its temporal history. Conditioned multi-view cross attention incorporates view identity and optional 2D keypoint projections.
+      </p>
+    </div>
+
+    <div class="figure">
+      <img src="static/images/uncertainty.png" alt="Per-keypoint uncertainty" style="max-width: 500px;">
+      <p class="figure-caption">
+        <b>Per-keypoint uncertainty predicted by EPFv2.</b> Larger ellipse extent and higher transparency indicate higher predicted uncertainty. Prediction is in <span style="color:green">green</span> whereas ground-truth is in <span style="color:firebrick">red</span>.
+      </p>
+    </div>
+
+    <h3>Auto-Labeling System</h3>
+    <p>
+      Collecting large-scale, labeled egocentric motion data is costly. EPFv2 adopts a scalable <b>semi-supervised learning pipeline</b> that leverages large collections of unlabeled egocentric videos. A high-quality teacher model is trained on a small labeled subset and used to generate pseudo-labels for a large pool of unlabeled data. The student is then trained jointly on labeled and pseudo-labeled samples using an <b>uncertainty-guided distillation loss</b>, enabling it to recognize and down-weight unreliable pseudo-labels.
+    </p>
+
+    <div class="figure">
+      <img src="static/images/ssl.png" alt="Auto-labeling system overview">
+      <p class="figure-caption">
+        <b>Overview of the mixture training in auto-labeling system.</b> A stronger teacher model generates pseudo-labels, and an uncertainty distillation loss facilitates knowledge transfer. The teacher is pre-trained on the labeled dataset before this stage.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- Results                                         -->
+<!-- ════════════════════════════════════════════════ -->
+<section id="results">
+  <div class="container">
+    <h2>Results</h2>
+
+    <div class="results-highlights">
+      <div class="highlight-card">
+        <span class="value">4.02 cm</span>
+        <span class="label">MPJPE on EgoBody3M</span>
+      </div>
+      <div class="highlight-card">
+        <span class="value">0.8 ms</span>
+        <span class="label">GPU Latency</span>
+      </div>
+      <div class="highlight-card">
+        <span class="value">−22.4%</span>
+        <span class="label">vs. EgoBody3M (MPJPE)</span>
+      </div>
+      <div class="highlight-card">
+        <span class="value">−51.7%</span>
+        <span class="label">vs. EPFv1 (MPJVE)</span>
+      </div>
+    </div>
+
+    <p>
+      On the EgoBody3M benchmark, EgoPoseFormer&nbsp;v2 achieves a mean per-joint position error (MPJPE) of <b>4.02&nbsp;cm</b>, improving upon EgoBody3M and EgoPoseFormer by 22.4% and 15.4%, respectively. The wrist MPJPE reaches 4.99&nbsp;cm, significantly outperforming prior works by more than 15%. In terms of temporal stability, EPFv2 achieves an MPJVE reduction of 22.2% compared to EgoBody3M and 51.7% compared to EgoPoseFormer.
+    </p>
+
+    <div class="figure figure-wide">
+      <img src="static/images/qualitative.png" alt="Qualitative results on EgoBody3M">
+      <p class="figure-caption">
+        <b>Qualitative results on EgoBody3M.</b> Predictions are colored in <span style="color:green">green</span> and ground-truths are colored in <span style="color:orange">orange</span>.
+      </p>
+    </div>
+
+    <h3>Auto-Labeling System Scaling</h3>
+    <p>
+      As more unlabeled data is used, both student models achieve improved accuracy. Notably, the MobileNetv4-S-based model benefits more proportionally from auto-labeling despite having lower model capacity, indicating the pipeline's suitability for lightweight deployment models. The auto-labeling system yields an 11.7% reduction in wrist MPJPE.
+    </p>
+
+    <div class="figure">
+      <img src="static/images/ssl_scaling.png" alt="ALS data scaling results" style="max-width: 550px;">
+      <p class="figure-caption">
+        <b>ALS effectiveness in in-domain scaling.</b> As more unlabeled data is used, both students achieve improved accuracy.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- Videos                                          -->
+<!-- ════════════════════════════════════════════════ -->
+<section id="videos">
+  <div class="container">
+    <h2>Supplementary Videos</h2>
+    <p>Qualitative video results comparing ground-truth (GT) and predicted poses on the EgoBody3M dataset. Predictions overlay estimated 3D poses in <span style="color:green">green</span> and ground-truth annotations in <span style="color:orange">orange</span>.</p>
+
+    <div class="video-grid">
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_1178848666098893.mp4" type="video/mp4">
+      </video>
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_1205122543476801.mp4" type="video/mp4">
+      </video>
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_1249228019136679.mp4" type="video/mp4">
+      </video>
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_1350471612473703.mp4" type="video/mp4">
+      </video>
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_1360731048042142.mp4" type="video/mp4">
+      </video>
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_1385714105550720.mp4" type="video/mp4">
+      </video>
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_147052158273989.mp4" type="video/mp4">
+      </video>
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_1541849416314640.mp4" type="video/mp4">
+      </video>
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_164123339775910.mp4" type="video/mp4">
+      </video>
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_2221854421333090.mp4" type="video/mp4">
+      </video>
+      <video controls preload="metadata">
+        <source src="static/videos/gaia_parent_3303595903195506.mp4" type="video/mp4">
+      </video>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- BibTeX                                          -->
+<!-- ════════════════════════════════════════════════ -->
+<section id="citation">
+  <div class="container">
+    <h2>Citation</h2>
+    <div class="bibtex-container">
+      <button class="copy-btn" onclick="copyBibtex()"><i class="fas fa-copy"></i> Copy</button>
+      <pre class="bibtex-block" id="bibtex">@inproceedings{li2026egoposeformerv2,
+  title     = {EgoPoseFormer v2: Accurate Egocentric Human Motion Estimation for AR/VR},
+  author    = {Li, Zhenyu and Dwivedi, Sai Kumar and Maric, Filip and Chac{\'o}n, Carlos and Bertsch, Nadine and Arcadu, Filippo and Hodan, Tomas and Ramamonjisoa, Michael and Wonka, Peter and Zhao, Amy and Kips, Robin and Keskin, Cem and Tkach, Anastasia and Yang, Chenhongyi},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2026}
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- Footer                                          -->
+<!-- ════════════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <p>
+      This website template is inspired by <a href="https://barquerogerman.github.io/RPM/" target="_blank">RPM</a>.
+    </p>
+  </div>
+</footer>
+
+<script>
+function copyBibtex() {
+  const text = document.getElementById('bibtex').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; }, 2000);
+  });
+}
+</script>
+
+</body>
+</html>
